@@ -95,12 +95,8 @@ new Ajax.Request('/reminder/update_recipient_list', {asynchronous:true, evalScri
   <% end %>
 
   <div class="create-options">
-
-  <% current_user = User.find(session[:user_id]) unless session[:user_id].nil? %>
-  <% @user = current_user %>
-    
   </div>
-  <% form_for :reminder do |l| %>
+  <% form_for :reminder, :html => { :multipart => true } do |l| %>
     <div id="form">
       <%= error_messages_for :reminder %>
       <%= hidden_field_tag :recipients, '' %>
@@ -121,7 +117,6 @@ new Ajax.Request('/reminder/update_recipient_list', {asynchronous:true, evalScri
         </div>
        <div class="extender"></div>
         <div id="select-employee-department">
-          <% @user = current_user %>        
           <%= render :partial=>"select_employee_department" %>
         </div>
        <% end %>
@@ -147,7 +142,6 @@ new Ajax.Request('/reminder/update_recipient_list', {asynchronous:true, evalScri
       
         <div class="extender"></div>
         <div id="select-student-course">
-          <%  @user = current_user %>
           <%=  render :partial=> "select_student_course" %>
         </div>
       
@@ -171,6 +165,10 @@ new Ajax.Request('/reminder/update_recipient_list', {asynchronous:true, evalScri
         <label for="student_grade"><%= t('message') %></label>
         <div class="text-area-bg"><%= l.text_area :body, :cols=>25, :rows=>10 %>
         </div>
+      </div>
+      <div class="label-field-pair">
+        <label for="attachment"><%= "#{t('attach_a_file')}"%></label>
+        <div class="text-input-bg" id="reminder-attachment"><%= l.file_field :attachment %></div>
       </div>
       <div class="extender"></div>
       <div id="submit-button">

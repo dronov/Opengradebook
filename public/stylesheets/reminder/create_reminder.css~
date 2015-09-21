@@ -41,7 +41,7 @@
     border: 1px solid #C6C6C6;
     margin: 5px 0px 0px 10px;
     width: 205px;
-    height: 25px;
+    height: 20px;
     padding: 5px;
 }
 

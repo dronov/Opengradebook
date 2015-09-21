@@ -12,8 +12,6 @@ class ReminderController < ApplicationController
   end
 
   def create_reminder
-
-    url = "#{request.protocol}#{request.host_with_port}"
     @user = current_user
     @courses = []
     @departments = []
@@ -41,29 +39,36 @@ class ReminderController < ApplicationController
     end
 
     @new_reminder_count = Reminder.find_all_by_recipient(@user.id, :conditions=>"is_read = false")
+    recipients_array = params[:send_to].split(",").collect{ |s| s.to_i } unless params[:send_to].nil?
 
-    unless params[:send_to].nil?
-      recipients_array = params[:send_to].split(",").collect{ |s| s.to_i }
-    end
     if request.post?
       unless params[:reminder][:body] == "" or params[:recipients] == ""
         recipients_array = params[:recipients].split(",").collect{ |s| s.to_i }
         @recipients = User.find(recipients_array)
 
-        Delayed::Job.enqueue(DelayedReminderJob.new( :sender_id  => @user.id,
-            :recipient_ids => recipients_array,
-            :subject=>params[:reminder][:subject],
-            :body=>params[:reminder][:body]))
+        @reminder = Reminder.create(params[:reminder])
+        @reminder.sender = 28
+        @reminder.recipient = 28
+        @reminder.save
+
+
+
+=begin
+        Delayed::Job.enqueue(
+            DelayedReminderJob.new(
+                :sender_id  => @user.id,
+                :recipient_ids => recipients_array,
+                :subject=>params[:reminder][:subject],
+                :body=>params[:reminder][:body],
+                :attachment=>params[:reminder][:attachment]))
+=end
 
         sender = User.find_by_username('admin').email
         subject = "#{t('new_message')} - " + params[:reminder][:subject]
-        to = []
-        to << @recipients.map{ |r| r.email }.select { |s| !s.empty? }.uniq
+        to = @recipients.map{ |r| r.email }.select { |s| !s.empty? }.uniq
         body = params[:reminder][:body]
 
-        if to.count > 0
-          Delayed::Job.enqueue(ImboxMailJob.new(sender,to,subject,body))
-        end
+        Delayed::Job.enqueue(InboxMailJob.new(sender,to,subject,body)) if to.count > 0
 
         flash[:notice] = "#{t('flash1')}"
         redirect_to :controller=>"reminder", :action=>"create_reminder"
@@ -268,5 +273,16 @@ class ReminderController < ApplicationController
     @new_reminder_count = Reminder.find_all_by_recipient(@user.id, :conditions=>"is_read = false")
 
     redirect_to :action=>:sent_reminder, :page=>params[:page]
+  end
+
+  def download_attachment
+    #download the  attached file
+    @reminder = Reminder.find params[:id]
+    if @reminder.download_allowed_for(current_user)
+      send_file @reminder.attachment.path , :type=>@reminder.attachment.content_type
+    else
+      flash[:notice] = "#{t('you_are_not_allowed_to_download_that_file')}"
+      redirect_to :controller=>:reminder
+    end
   end
 end

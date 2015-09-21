@@ -8,7 +8,7 @@ class UserNotifier < ActionMailer::Base
     @body[:url]  =  current_url+"/user/reset_password/#{user.reset_password_code}"
   end
 
-  def imbox(sender,recipients,subject,body)
+  def inbox(sender,recipients,subject,body)
   
     if sender == "" or sender == nil
       sender = User.find_by_username('admin').email
